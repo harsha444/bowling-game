@@ -8,6 +8,7 @@ cd bowling-game/
 
 python3 bowling.py
 ```
+You will be asked a set of questions. Follow accordingly to simulate the game.
 
 ## Documentation
 
