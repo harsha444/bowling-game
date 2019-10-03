@@ -1,12 +1,16 @@
 import random
+import time
 from collections import defaultdict
+from constants import ARENA_CONSTANTS as arena_constants
+from constants import BOWLING_GAME_CONSTANTS as bowling_constants
+from constants import PLAYER_CONSTANTS as player_constants
 
 
 class Arena:
     """
     Class to configure an arena. An arena can accommodate x number of Bowling lanes
     """
-    n_lanes = 5  # Keeping it default for now
+    n_lanes = arena_constants.TOTAL_LANES  # Keeping it default for now
 
     def __init__(self):
         pass
@@ -25,6 +29,8 @@ class Arena:
         Decreasing the number of lanes available once a game is started
         :return:
         """
+        if cls.n_lanes <= 0:
+            raise Exception("Lanes not available. Try after some time.")
         cls.n_lanes -= 1
 
     @classmethod
@@ -52,7 +58,7 @@ class Player:
 
     def __init__(self, name: str):
         self._name = name
-        self.score = 0
+        self.score = player_constants.INITIAL_SCORE
 
     def get_name(self) -> str:
         """
@@ -75,27 +81,40 @@ class BowlingGame(Game):
     """
 
     def __init__(self, n_players: int):
+        try:
+            Arena.join_arena()
+        except Exception as ex:
+            raise Exception(f'{ex}')
         Game.__init__(self, n_players)
-        self.frame_number = 1
+        self.frame_number = bowling_constants.INITIAL_FRAME_NUMBER
         self.players = []
         self.rolls = defaultdict(list)
         self.scores = defaultdict(list)  # Keeping a track of individual scores for each roll as well
         for i in range(n_players):
             player = input(f"Enter player {i + 1} name: ")
             self.players.append(Player(player))
-        Arena.join_arena()
+        print('Joined arena!')
+
+    def __repr__(self):
+        return " vs ".join([i.get_name() for i in self.players])
 
     def get_scoreboard(self):
         """
         Prints the scoreboard at a given point of game.
         :return:
         """
-        # print(self.scores, self.rolls)
         for _player in self.players:
             player_name = _player.get_name()
-            print(f"{player_name}")
+            print(f"{player_name} \n-------------------")
             print(f"Rolls: {self.rolls.get(player_name)}")
-            print(f"Scores: {self.scores.get(player_name)}")
+            print(f"Scores: {self.scores.get(player_name)} \n-------------------")
+        winners_list = self.game_master()
+        res = ","
+        if len(winners_list) > 1:
+            print(
+                f"It's a tie between {res.join([i.get_name() for i in winners_list])} with a score of {winners_list[0].get_score()}.!")
+        else:
+            print(f"Winner of the game is: {winners_list[0].get_name()} with a score of {winners_list[0].get_score()}")
 
     @staticmethod
     def is_spare(_set: list) -> bool:
@@ -131,70 +150,91 @@ class BowlingGame(Game):
         :return:
         """
         if self.is_strike(_set):
-            return sum(_set) + 10
+            return sum(_set) + bowling_constants.STRIKE_BONUS
         elif self.is_spare(_set):
-            return sum(_set) + 5
+            return sum(_set) + bowling_constants.SPARE_BONUS
         else:
             return sum(_set)
 
     def start_game(self):
         """
-        Initiating the game with random rolls
+        Starts the game
         :return:
         """
-        if Arena.n_lanes_available() <= 0:
-            print("Lanes are not available.")
-            return
-        for i in range(1, 11):
-            self.frame_number = i
+        while self.frame_number <= bowling_constants.TOTAL_FRAMES:
+            print(f"FRAME:{self.frame_number}")
             for _player in self.players:
                 _set = []
                 first_strike = random.randint(0, 10)
                 _set.append(first_strike)
-                if BowlingGame.is_strike(_set) and i != 11:
-                    self.rolls[_player.get_name()].append(_set)
-                    _player.score += 20
-                    self.scores[_player.get_name()].append(_player.get_score())
-                    continue
-                else:
+                if not self.is_strike(_set):
                     second_strike = random.randint(0, 10 - first_strike)
-                    _set.append(second_strike)
-                    self.rolls[_player.get_name()].append(_set)
-                    if BowlingGame.is_spare(_set):
-                        _player.score += 15
-                    else:
-                        _player.score += sum(_set)
-                    self.scores[_player.get_name()].append(_player.get_score())
-        Arena.leave_arena()
-        self.get_scoreboard()
-
-    def start_game_v2(self):
-        """
-
-        :return:
-        """
-        if Arena.n_lanes_available() <= 0:
-            print("No lanes available")
-            return
-        while self.frame_number <= 10:
-            for _player in self.players:
-                _set = []
-                first_strike = random.randint(0, 10)
-                _set.append(first_strike)
-                second_strike = random.randint(0, 10 - first_strike) if not self.is_strike(_set) else None
+                elif self.is_strike(_set) and self.frame_number == 10:
+                    second_strike = random.randint(0, 10)
+                else:
+                    second_strike = None
                 if second_strike is not None:
                     _set.append(second_strike)
+                third_strike = None
                 if self.frame_number == 10 and (self.is_strike(_set) or self.is_spare(_set)):
-                    third_strike = random.randint(0, 10)
+                    if self.is_spare(_set):
+                        third_strike = random.randint(0, 10)
+                    else:
+                        third_strike = random.randint(0, 10 - second_strike)
                     _set.append(third_strike)
                 self.rolls[_player.get_name()].append(_set)
                 _player.score = _player.score + self.calculate_set_score(_set)
+                display_msg = f"{_player.get_name()} rolls {first_strike} in his first strike, {second_strike} in his second strike"
+                if third_strike is not None:
+                    display_msg += f" and {third_strike} rolls in his third turn"
+                score_msg = f"- His score till now = {_player.score}"
+                print(display_msg + score_msg)
                 self.scores[_player.get_name()].append(_player.score)
+                time.sleep(1)  # Added for cleaner simulation purpose
             self.frame_number += 1
+        print("Game ended! Here's the score card:\n-------------------")
         Arena.leave_arena()
         self.get_scoreboard()
 
 
+def simulate_game():
+    """
+    Test simulator to test the game
+    :return:
+    """
+    games = {}
+    i = 0
+    while True:
+        query = int(
+            input(
+                "Enter 1 to show the existing games in arena, 2 to create a new game, 3 to start a game, any other to exit: "))
+        if query == 1:
+            print(games)
+        elif query == 2:
+            n_players = int(input("Enter the number of players in the game: "))
+            try:
+                game = BowlingGame(n_players)
+            except Exception as ex:
+                print(ex)
+                continue
+            games[i] = game
+            i += 1
+            query = int(input("Start the game? 1/0 "))
+            if query == 1:
+                game.start_game()
+                games.pop(i)
+            else:
+                continue
+        elif query == 3:
+            game_number = int(input(f"Enter the game number from {games}: "))
+            if games.get(game_number):
+                games[game_number].start_game()
+                games.pop(game_number)
+            else:
+                print("No such game number available!")
+        else:
+            exit(1)
+
+
 if __name__ == "__main__":
-    g = BowlingGame(2)
-    g.start_game_v2()
+    simulate_game()
