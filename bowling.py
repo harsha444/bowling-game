@@ -136,7 +136,7 @@ class BowlingGame(Game):
 
     def game_master(self) -> list:
         """
-        Gets the winner of this game
+        Gets a list of winners for this game
         :return:
         """
         user_score_map = {i: i.get_score() for i in self.players}
