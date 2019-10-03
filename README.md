@@ -33,3 +33,5 @@ You will be asked a set of questions. Follow accordingly to simulate the game.
 > Also, a simulator logic is present which simulates the game.
 
 All the constants are in constants.py and are configurable.
+
+*Note*: Game is configured such that not just 2, but any number of players can play on a single lane.
