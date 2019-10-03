@@ -14,10 +14,10 @@ python3 bowling.py
 `Arena`
 - Arena is basically where we have bowling lanes.
 - An arena may have multiple bowling lanes
-- At any point of time the maximum number of games that can be played is equal to the number of lanes  available.
+- At any point of time the maximum number of games that can be played is equal to the number of lanes available. Right now, it is set to 5. Configurable in constants.py
 
 `Game`
-- Just a base class.
+- Just a base class for any game.
 - In case we have any other kinds of games, this class becomes a base to be inherited by such various games and generic attributes and methods of a game will be specified here.
 
 `Player`
