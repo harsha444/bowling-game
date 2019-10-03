@@ -143,7 +143,7 @@ class BowlingGame(Game):
         max_score = max(user_score_map.values())
         return list(filter(lambda i: user_score_map[i] == max_score, list(user_score_map.keys())))
 
-    def calculate_set_score(self, _set):
+    def calculate_set_score(self, _set: list) -> int:
         """
         Calculates score of a set
         :param _set:
@@ -184,7 +184,9 @@ class BowlingGame(Game):
                     _set.append(third_strike)
                 self.rolls[_player.get_name()].append(_set)
                 _player.score = _player.score + self.calculate_set_score(_set)
-                display_msg = f"{_player.get_name()} rolls {first_strike} in his first strike, {second_strike} in his second strike"
+                display_msg = f"{_player.get_name()} rolls {first_strike} in his first strike"
+                if second_strike is not None:
+                    display_msg += f", {second_strike} in his second strike"
                 if third_strike is not None:
                     display_msg += f" and {third_strike} rolls in his third turn"
                 score_msg = f"- His score till now = {_player.score}"
@@ -218,11 +220,11 @@ def simulate_game():
                 print(ex)
                 continue
             games[i] = game
-            i += 1
             query = int(input("Start the game? 1/0 "))
             if query == 1:
                 game.start_game()
                 games.pop(i)
+                i += 1
             else:
                 continue
         elif query == 3:
